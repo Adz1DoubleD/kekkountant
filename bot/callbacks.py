@@ -1,10 +1,10 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ConversationHandler
 
-import time, random
+import os, random, time
 from datetime import datetime
 
-from bot import db, settings, tools
+from bot import constants, db, tools
 from main import application
 
 job_queue = application.job_queue
@@ -80,15 +80,37 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
             context.bot_data['clicked_id'] = clicked.message_id
-            settings.RESTART_TIME = datetime.now().timestamp()
-            settings.BUTTON_TIME = tools.random_button_time()
+            constants.RESTART_TIME = datetime.now().timestamp()
+            constants.BUTTON_TIME = tools.random_button_time()
             job_queue.run_once(
                 button_send,
-                settings.BUTTON_TIME,
-                chat_id=settings.TG_CHANNEL_ID,
+                constants.BUTTON_TIME,
+                chat_id=constants.TG_CHANNEL_ID,
                 name="Click Me",
             )
 
+
+async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if not user_id in constants.TG_ADMIN_ID:
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    try:
+        result_text = db.clicks_reset()
+        await query.edit_message_text(
+            text=result_text
+        )
+    except Exception as e:
+        await query.answer(
+            text=f"An error occurred: {str(e)}",
+            show_alert=True
+        )
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
@@ -99,8 +121,8 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
 
     if previous_click_me_id:
         try:
-            await context.bot.delete_message(chat_id=settings.TG_CHANNEL_ID, message_id=previous_click_me_id)
-            await context.bot.delete_message(chat_id=settings.TG_CHANNEL_ID, message_id=previous_clicked_id)
+            await context.bot.delete_message(chat_id=constants.TG_CHANNEL_ID, message_id=previous_click_me_id)
+            await context.bot.delete_message(chat_id=constants.TG_CHANNEL_ID, message_id=previous_clicked_id)
         except Exception:
             pass
 
@@ -112,9 +134,99 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
     )
     click_me = await context.bot.send_photo(
         photo=tools.random_logo(),
-        chat_id=settings.TG_CHANNEL_ID,
+        chat_id=constants.TG_CHANNEL_ID,
         reply_markup=keyboard,
     )
 
     context.bot_data["button_generation_timestamp"] = time.time()
     context.bot_data['click_me_id'] = click_me.message_id
+
+
+async def question_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+
+    try:
+        await query.edit_message_text(
+            text="Action canceled. No changes were made."
+        )
+    except Exception as e:
+        await update.message.reply_text(
+            text="Action canceled. No changes were made."
+        )
+
+    return ConversationHandler.END
+
+
+async def question_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data=None):
+    query = update.callback_query
+
+    callback_data = callback_data or query.data
+    question = callback_data.split(":")[1]
+
+    replies = {
+        "clicks_reset": "Are you sure you want to reset clicks?",
+    }
+
+    reply = replies.get(question)
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Yes", callback_data=question),
+            InlineKeyboardButton("No", callback_data="cancel"),
+        ]
+    ]
+
+    await query.edit_message_text(
+        text=reply,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if not user_id in constants.TG_ADMIN_ID:
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    callback_data = query.data
+
+    setting = callback_data.replace("settings_toggle_", "")
+
+    try:
+        current_status = db.settings_get(setting)
+        new_status = not current_status
+        db.settings_set(setting, new_status)
+
+        formatted_setting = setting.replace("_", " ").title()
+        await query.answer(
+            text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
+        )
+
+        settings = db.settings_get_all()
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
+                    callback_data=f"settings_toggle_{s}"
+                )
+            ]
+            for s, v in settings.items()
+        ]
+        keyboard.append(
+            [
+                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
+            ]
+        )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_reply_markup(reply_markup=reply_markup)
+    except Exception as e:
+        await query.answer(
+        text=f"Error: {e}",
+        show_alert=True
+        )

@@ -5,7 +5,7 @@ import random, requests
 from pyfiglet import Figlet
 from gtts import gTTS
 
-from bot import db, settings, tools
+from bot import constants, db, tools
 
 
 async def ascii(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -21,18 +21,18 @@ async def ascii(update: Update, context: ContextTypes.DEFAULT_TYPE):
         custom_fig = Figlet(font="slant")
         ascii_art = custom_fig.renderText(input_text)
         await update.message.reply_text(
-            f"*{settings.PROJECT_NAME} ASCII Art*\n\n"
+            f"*{constants.PROJECT_NAME} ASCII Art*\n\n"
             f"Best viewed on PC full screen.\n\n`{ascii_art}`",
         parse_mode="Markdown",
         )
 
 
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not settings.CA:
+    if not constants.CA:
         await update.message.reply_photo(
         photo = tools.random_logo(),
         caption=
-            f"*{settings.PROJECT_NAME} CA*\n\nComing Soon!\n\n",
+            f"*{constants.PROJECT_NAME} CA*\n\nComing Soon!\n\n",
         parse_mode="Markdown"
         )
         return
@@ -43,7 +43,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text=f"Buy On Uniswap", url=f"https://app.uniswap.org/#/swap?chain={settings.CHAIN}&outputCurrency={settings.CA}"
+                        text=f"Buy On Uniswap", url=f"https://app.uniswap.org/#/swap?chain={constants.CHAIN}&outputCurrency={constants.CA}"
                     )
                 ]
             ]
@@ -52,11 +52,11 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def ca(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not settings.CA:
+    if not constants.CA:
         await update.message.reply_photo(
         photo = tools.random_logo(),
         caption=
-            f"*{settings.PROJECT_NAME} CA*\n\nComing Soon!\n\n",
+            f"*{constants.PROJECT_NAME} CA*\n\nComing Soon!\n\n",
         parse_mode="Markdown"
         )
         return
@@ -64,17 +64,17 @@ async def ca(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo = tools.random_logo(),
         caption=
-            f"*{settings.PROJECT_NAME} CA* \n\n`{settings.CA}`\n\n",
+            f"*{constants.PROJECT_NAME} CA* \n\n`{constants.CA}`\n\n",
         parse_mode="Markdown"
     )
 
 
 async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not settings.CA:
+    if not constants.CA:
         await update.message.reply_photo(
         photo = tools.random_logo(),
         caption =
-            f"*{settings.PROJECT_NAME} Chart*\n\nComing Soon!\n\n",
+            f"*{constants.PROJECT_NAME} Chart*\n\nComing Soon!\n\n",
         parse_mode="Markdown"
         )
         return
@@ -84,7 +84,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text=f"📈 Chart", url=f"{settings.CHART_LINK}"
+                        text=f"📈 Chart", url=f"{constants.CHART_LINK}"
                     )
                 ]
             ]
@@ -100,7 +100,7 @@ async def coinflip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo = tools.random_logo(),
         caption =
-            f"*{settings.PROJECT_NAME} Coin Flip*\n\n{tools.escape_markdown(user_info)} flipped {choice}\n\n",
+            f"*{constants.PROJECT_NAME} Coin Flip*\n\n{tools.escape_markdown(user_info)} flipped {choice}\n\n",
         parse_mode="Markdown"
 )
 
@@ -109,16 +109,16 @@ async def daily(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo = tools.random_logo(),
         caption=(
-            f"*{settings.PROJECT_NAME} Daily Tasks*\n\n"
+            f"*{constants.PROJECT_NAME} Daily Tasks*\n\n"
             "Vote for us on the following links\n"
-            f"- [Dexscreener](https://dexscreener.com/{settings.CHAIN}/{settings.CA})\n"
-            f"- [Dextools](https://www.dextools.io/app/en/{settings.CHAIN}/pair-explorer/{settings.CA})\n"
-            f"- [CoinGecko](https://www.coingecko.com/en/coins/{settings.TICKER.lower()})\n"
-            f"- [Coin Market Cap](https://coinmarketcap.com/currencies/{settings.PROJECT_NAME})\n\n"
+            f"- [Dexscreener](https://dexscreener.com/{constants.CHAIN}/{constants.CA})\n"
+            f"- [Dextools](https://www.dextools.io/app/en/{constants.CHAIN}/pair-explorer/{constants.CA})\n"
+            f"- [CoinGecko](https://www.coingecko.com/en/coins/{constants.TICKER.lower()})\n"
+            f"- [Coin Market Cap](https://coinmarketcap.com/currencies/{constants.PROJECT_NAME})\n\n"
             "Like and RT everything on the link below\n"
-            f"- [{settings.PROJECT_NAME} Twitter Search](https://twitter.com/search?q=%23{settings.PROJECT_NAME.upper()}&src=typed_query)\n\n"
+            f"- [{constants.PROJECT_NAME} Twitter Search](https://twitter.com/search?q=%23{constants.PROJECT_NAME.upper()}&src=typed_query)\n\n"
             f"Post at least 5 tweets a day and share them here with the link below\n"
-            f"- [Create Tweets with {settings.PROJECT_NAME} tags](http://twitter.com/intent/tweet?text=%0A%0A%0A@{settings.TWITTER}%20${settings.PROJECT_NAME.upper()}&url=%0A{settings.WEBSITE}&hashtags={settings.PROJECT_NAME.upper()}%2CDEFIDOGS)"
+            f"- [Create Tweets with {constants.PROJECT_NAME} tags](http://twitter.com/intent/tweet?text=%0A%0A%0A@{constants.TWITTER}%20${constants.PROJECT_NAME.upper()}&url=%0A{constants.WEBSITE}&hashtags={constants.PROJECT_NAME.upper()}%2CDEFIDOGS)"
         ),
         parse_mode="Markdown"
     )
@@ -130,7 +130,7 @@ async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
         photo = tools.random_logo(),
         caption =
-            f'{settings.PROJECT_NAME} Joke\n\n'
+            f'{constants.PROJECT_NAME} Joke\n\n'
             f'{joke["joke"]}\n\n',
         parse_mode="Markdown"
         )
@@ -138,7 +138,7 @@ async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
         photo = tools.random_logo(),
         caption =
-            f'{settings.PROJECT_NAME} Joke\n\n'
+            f'{constants.PROJECT_NAME} Joke\n\n'
             f'{joke["setup"]}\n\n{joke["delivery"]}\n\n',
         parse_mode="Markdown"
         )
@@ -200,7 +200,7 @@ async def roll(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
         photo = tools.random_logo(),
         caption=
-            f'*{settings.PROJECT_NAME} Number Roll*\n\n{tools.escape_markdown(user_info)} rolled {result}\n\nBetween 1 and {max_number}\n\n',
+            f'*{constants.PROJECT_NAME} Number Roll*\n\n{tools.escape_markdown(user_info)} rolled {result}\n\nBetween 1 and {max_number}\n\n',
         parse_mode="Markdown",)
 
 
@@ -209,8 +209,8 @@ async def say(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Please provide some words to convert to speech.")
         return
     voice_note = gTTS(" ".join(context.args), lang='en', slow=False)
-    voice_note.save(f"media/{settings.PROJECT_NAME}-voicenote.mp3")
-    await update.message.reply_audio(audio=open(f"media/{settings.PROJECT_NAME}-voicenote.mp3", "rb"))
+    voice_note.save(f"media/{constants.PROJECT_NAME}-voicenote.mp3")
+    await update.message.reply_audio(audio=open(f"media/{constants.PROJECT_NAME}-voicenote.mp3", "rb"))
 
 
 async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -220,8 +220,8 @@ async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         [
                             InlineKeyboardButton(
-                                text=f"@{settings.TWITTER}",
-                                url=f"https://twitter.com/{settings.TWITTER}",
+                                text=f"@{constants.TWITTER}",
+                                url=f"https://twitter.com/{constants.TWITTER}",
                             )
                         ],
                     ]
@@ -236,8 +236,8 @@ async def website(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         [
                             InlineKeyboardButton(
-                                text=f"{settings.WEBSITE}",
-                                url=f"https://{settings.WEBSITE}",
+                                text=f"{constants.WEBSITE}",
+                                url=f"https://{constants.WEBSITE}",
                             )
                         ],
                     ]

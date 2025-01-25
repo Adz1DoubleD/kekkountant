@@ -124,26 +124,6 @@ def clicks_get_total():
         return 0
 
 
-async def clicks_remove(name):
-    db_connection = create_db_connection()
-    cursor = db_connection.cursor()
-
-    try:
-        cursor.execute("""
-            UPDATE leaderboard
-            SET clicks = 0, time_taken = NULL, streak = 0
-            WHERE name = %s
-        """, (name,))
-
-        db_connection.commit()
-    except mysql.connector.Error:
-        return "Error removing clicks"
-    finally:
-        close_db_connection(db_connection, cursor)
-
-    return "Clicks removed successfully"
-
-
 def clicks_reset():
     db_connection = create_db_connection()
     cursor = db_connection.cursor()
@@ -199,3 +179,53 @@ async def clicks_update(name, time_taken):
     close_db_connection(db_connection, cursor)
 
 
+def settings_set(setting_name: str, value: bool):
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        cursor.execute("""
+            UPDATE settings SET value = %s WHERE setting_name = %s
+        """, (1 if value else 0, setting_name))
+        
+        db_connection.commit()
+    except mysql.connector.Error as e:
+        return f"Error updating {setting_name}: {e}"
+    finally:
+        cursor.close()
+        db_connection.close()
+        return "completed"
+
+
+def settings_get(setting_name: str) -> bool:
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        cursor.execute("""
+            SELECT value FROM settings WHERE setting_name = %s
+        """, (setting_name,))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        db_connection.close()
+
+        return result[0] == 1 if result else False
+    except mysql.connector.Error as e:
+        return False
+    
+
+def settings_get_all():
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        cursor.execute("SELECT setting_name, value FROM settings")
+        results = cursor.fetchall()
+
+        cursor.close()
+        db_connection.close()
+
+        return {setting: value == 1 for setting, value in results}
+    except mysql.connector.Error:
+        return {}

@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandle
 
 import os
 
-from bot import admin, commands, callbacks, settings
+from bot import admin, commands, callbacks, constants
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
@@ -26,9 +26,8 @@ async def error(update: Update, context):
 if __name__ == "__main__":
     application.add_error_handler(error)
     
-    application.add_handler(CommandHandler("admin", admin.command))
-    application.add_handler(CommandHandler("reset", admin.reset))
-    application.add_handler(CommandHandler("click_me", admin.click_me))
+    application.add_handler(CommandHandler(["click_me", "clickme"], admin.click_me))
+    application.add_handler(CommandHandler("settings", admin.command))
     application.add_handler(CommandHandler("wen", admin.wen))
 
     application.add_handler(CommandHandler("ascii", commands.ascii))
@@ -46,11 +45,15 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("website", commands.website))
 
     application.add_handler(CallbackQueryHandler(callbacks.button_click, pattern=r"^click_button:\d+$"))
+    application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$"))
+    application.add_handler(CallbackQueryHandler(callbacks.settings_toggle, pattern="^settings_toggle_"))
+    application.add_handler(CallbackQueryHandler(callbacks.question_cancel, pattern="^cancel$"))
+    application.add_handler(CallbackQueryHandler(callbacks.question_confirm, pattern="^question:.*"))
 
     job_queue.run_once(
         callbacks.button_send,
-        settings.FIRST_BUTTON_TIME,
-        settings.TG_CHANNEL_ID,
+        constants.FIRST_BUTTON_TIME,
+        constants.TG_CHANNEL_ID,
         name="Click Me",
     )
 

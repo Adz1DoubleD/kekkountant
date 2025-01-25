@@ -1,43 +1,57 @@
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from datetime import datetime, timedelta
 
-from bot import callbacks, db, settings
+from bot import callbacks, constants, db
 
 
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id in settings.TG_ADMIN_ID:
+    if user_id in constants.TG_ADMIN_ID:
+        settings = db.settings_get_all()
+        if not settings:
+            await update.message.reply_text("Error fetching settings.")
+            return
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"{setting.replace('_', ' ').title()}: {'ON' if status else 'OFF'}",
+                    callback_data=f"settings_toggle_{setting}"
+                )
+            ]
+            for setting, status in settings.items()
+        ]
+
+        keyboard.append(
+            [
+                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
+            ]
+        )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
-            "Admin Commands:\n\n"
-            "/click_me\n"
-            "/reset\n"
-            "/wen")
+            f"Admin Commands:\n\n"
+            "/click_me - Sends Click me Instantly\n"
+            "/wen - Next click me time", reply_markup=reply_markup)
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id in settings.TG_ADMIN_ID:
+    if user_id in constants.TG_ADMIN_ID:
         await callbacks.button_send(context)
-
-
-async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id in settings.TG_ADMIN_ID:
-        db.clicks_reset()
-        await update.message.reply_text("Clicks Reset")
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id in settings.TG_ADMIN_ID:
+    if user_id in constants.TG_ADMIN_ID:
         if update.effective_chat.type == "private":
-            if settings.BUTTON_TIME is not None:
-                time = settings.BUTTON_TIME
+            if constants.BUTTON_TIME is not None:
+                time = constants.BUTTON_TIME
             else:    
-                time = settings.FIRST_BUTTON_TIME
-            target_timestamp = settings.RESTART_TIME + time
+                time = constants.FIRST_BUTTON_TIME
+            target_timestamp = constants.RESTART_TIME + time
             time_difference_seconds = target_timestamp - datetime.now().timestamp()
             time_difference = timedelta(seconds=time_difference_seconds)
             hours, remainder = divmod(time_difference.seconds, 3600)
