@@ -114,6 +114,9 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
+    if not db.settings_get("click_me"):
+        return
+    
     context.bot_data["first_user_clicked"] = False
 
     previous_click_me_id = context.bot_data.get('click_me_id')

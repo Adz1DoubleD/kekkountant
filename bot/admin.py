@@ -40,22 +40,29 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        await callbacks.button_send(context)
+        if db.settings_get("click_me"):
+            await callbacks.button_send(context)
+        else:
+            await update.message.reply_text(f"Click Me is disabled")
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
         if update.effective_chat.type == "private":
-            if constants.BUTTON_TIME is not None:
-                time = constants.BUTTON_TIME
-            else:    
-                time = constants.FIRST_BUTTON_TIME
-            target_timestamp = constants.RESTART_TIME + time
-            time_difference_seconds = target_timestamp - datetime.now().timestamp()
-            time_difference = timedelta(seconds=time_difference_seconds)
-            hours, remainder = divmod(time_difference.seconds, 3600)
-            minutes, seconds = divmod(remainder, 60)
+            if db.settings_get("click_me"):
+                if constants.BUTTON_TIME is not None:
+                    time = constants.BUTTON_TIME
+                else:    
+                    time = constants.FIRST_BUTTON_TIME
+                target_timestamp = constants.RESTART_TIME + time
+                time_difference_seconds = target_timestamp - datetime.now().timestamp()
+                time_difference = timedelta(seconds=time_difference_seconds)
+                hours, remainder = divmod(time_difference.seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
 
-            await update.message.reply_text(f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds\n\n"
-            )
+                await update.message.reply_text(f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds"
+                )
+            else:
+                await update.message.reply_text(f"Next Click Me:\n\nDisabled\n\n"
+                )
