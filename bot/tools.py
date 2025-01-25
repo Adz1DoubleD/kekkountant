@@ -1,4 +1,4 @@
-import os, random
+import media, random
 
 
 def escape_markdown(text):
@@ -14,9 +14,5 @@ def random_button_time():
 
 
 def random_logo():
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    media_path = os.path.join(base_dir, "media")
-    files = [f for f in os.listdir(media_path) if os.path.isfile(os.path.join(media_path, f))]
-    random_file = random.choice(files)
-    random_logo_path = f"media/{random_file}"
-    return random_logo_path
+    random_logo = random.choice(media.logos)
+    return random_logo

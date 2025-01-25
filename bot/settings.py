@@ -7,4 +7,10 @@ FIRST_BUTTON_TIME = tools.random_button_time()
 RESTART_TIME = datetime.now().timestamp()
 TG_ADMIN_ID = [6509684511, 1667971437]
 TG_CHANNEL_ID = "-1002259222799"
-
+PROJECT_NAME = "Kekkountant"
+TWITTER = "kekkekkountant"
+WEBSITE = "kekkountant.com/"
+CA = None
+CHAIN = ""
+CHART_LINK = ""
+TICKER = ""
