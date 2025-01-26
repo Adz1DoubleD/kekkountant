@@ -1,12 +1,16 @@
 from telegram import Update, Message
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes
 
 import os
 
-from bot import admin, commands, callbacks, constants, db
+from bot import admin, commands, callbacks, constants, db, tools
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
+
+
+async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    return
 
 
 async def error(update: Update, context):
@@ -50,12 +54,18 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(callbacks.question_cancel, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(callbacks.question_confirm, pattern="^question:.*"))
 
-    if db.settings_get("click_me"):
-        job_queue.run_once(
-            callbacks.button_send,
-            constants.FIRST_BUTTON_TIME,
-            constants.TG_CHANNEL_ID,
-            name="Click Me",
-        )
+    if not tools.is_local():
+        print("Running on server")
+        if db.settings_get("click_me"):
+            job_queue.run_once(
+                callbacks.button_send,
+                constants.FIRST_BUTTON_TIME,
+                constants.TG_CHANNEL_ID,
+                name="Click Me",
+            )
+        
+        else:
+            application.add_handler(CommandHandler("test", test_command))
+            print("Running Bot locally for testing")
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)

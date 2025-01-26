@@ -149,12 +149,14 @@ async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     click_counts_total = db.clicks_get_total()
     fastest_user, fastest_time = db.clicks_fastest_time()
     streak_user, streak_value = db.clicks_check_highest_streak()
+    formatted_fastest_time = tools.format_seconds(fastest_time)
+
     message = (
         f"*Fastest player Leaderboard*\n\n"
         f"{tools.escape_markdown(board)}\n"
-        f"Total clicks: *{click_counts_total}*\n"
-        f"\nFastest click:\n"
-        f"{fastest_time:,.3f} seconds\n"
+        f"Total clicks: *{click_counts_total}*\n\n"
+        f"Fastest click:\n"
+        f"{formatted_fastest_time}\n"
         f"by @{tools.escape_markdown(fastest_user)}\n\n"
         f"@{tools.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!"
     )

@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
-import os, random, time
+import random, time
 from datetime import datetime
 
 from bot import constants, db, tools
@@ -21,73 +21,67 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not button_generation_timestamp:
         await update.callback_query.answer("Too slow!", show_alert=True)
         return
+    
+    if context.bot_data.get("first_user_clicked"):
+        await update.callback_query.answer("Too slow!", show_alert=True)
+        return
 
-    button_data = update.callback_query.data
     user = update.effective_user
     user_info = user.username or f"{user.first_name} {user.last_name}" or user.first_name
 
-    context.user_data.setdefault("clicked_buttons", set())
-    if button_data in context.user_data["clicked_buttons"]:
-        await update.callback_query.answer("You have already clicked this button.", show_alert=True)
-        return
+    time_taken = button_click_timestamp - button_generation_timestamp
+    formatted_time_taken = tools.format_seconds(time_taken)
 
-    context.user_data["clicked_buttons"].add(button_data)
+    await db.clicks_update(user_info, time_taken)
 
-    if button_data == current_button_data:
-        time_taken = button_click_timestamp - button_generation_timestamp
+    context.bot_data["first_user_clicked"] = True
 
-        await db.clicks_update(user_info, time_taken)
+    user_data = db.clicks_get_by_name(user_info)
+    clicks, _, streak = user_data
+    total_click_count = db.clicks_get_total()
 
-        if not context.bot_data.get("first_user_clicked"):
-            context.bot_data["first_user_clicked"] = True
+    if clicks == 1:
+        user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
+    elif clicks % 10 == 0:
+        user_count_message = f"🎉🎉 They have been the fastest player {clicks} times and on a *{streak}* click streak! 🎉🎉"
+    else:
+        user_count_message = f"They have been the fastest player {clicks} times and on a *{streak}* click streak!"
 
-            user_data = db.clicks_get_by_name(user_info)
-            clicks, _, streak = user_data
-            total_click_count = db.clicks_get_total()
+    if db.clicks_check_is_fastest(time_taken):
+        user_count_message += f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
 
-            if clicks == 1:
-                user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
-            elif clicks % 10 == 0:
-                user_count_message = f"🎉🎉 They have been the fastest player {clicks} times and on a *{streak}* click streak! 🎉🎉"
-            else:
-                user_count_message = f"They have been the fastest player {clicks} times and on a *{streak}* click streak!"
+    message_text = (
+        f"@{tools.escape_markdown(user_info)} was the fastest player in {formatted_time_taken}!\n\n"
+        f"{user_count_message}\n\n"
+        f"The button has been clicked a total of {total_click_count} times by all players!\n\n"
+        f"use `/leaderboard` to see the fastest players!"
+    )
 
-            if db.clicks_check_is_fastest(time_taken):
-                user_count_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
+    photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
+    if photos and photos.photos and photos.photos[0]:
+        photo = photos.photos[0][0].file_id
+        clicked = await context.bot.send_photo(
+            photo=photo,
+            chat_id=update.effective_chat.id,
+            caption=message_text,
+            parse_mode="Markdown"
+        )
+    else:
+        clicked = await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=message_text,
+            parse_mode="Markdown"
+        )
 
-            message_text = (
-                f"@{tools.escape_markdown(user_info)} was the fastest player in {time_taken:.3f} seconds!\n\n"
-                f"{user_count_message}\n\n"
-                f"The button has been clicked a total of {total_click_count} times by all players!\n\n"
-                f"use `/leaderboard` to see the fastest players!"
-            )
-
-            photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
-            if photos and photos.photos and photos.photos[0]:
-                photo = photos.photos[0][0].file_id
-                clicked = await context.bot.send_photo(
-                    photo=photo,
-                    chat_id=update.effective_chat.id,
-                    caption=message_text,
-                    parse_mode="Markdown"
-                )
-            else:
-                clicked = await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=message_text,
-                    parse_mode="Markdown"
-                )
-
-
-            context.bot_data['clicked_id'] = clicked.message_id
-            constants.RESTART_TIME = datetime.now().timestamp()
-            constants.BUTTON_TIME = tools.random_button_time()
-            job_queue.run_once(
-                button_send,
-                constants.BUTTON_TIME,
-                chat_id=constants.TG_CHANNEL_ID,
-                name="Click Me",
-            )
+    context.bot_data['clicked_id'] = clicked.message_id
+    constants.RESTART_TIME = datetime.now().timestamp()
+    constants.BUTTON_TIME = tools.random_button_time()
+    job_queue.run_once(
+        button_send,
+        constants.BUTTON_TIME,
+        chat_id=constants.TG_CHANNEL_ID,
+        name="Click Me",
+    )
 
 
 async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
