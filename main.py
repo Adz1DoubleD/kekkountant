@@ -40,6 +40,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("chart", commands.chart))
     application.add_handler(CommandHandler("coinflip", commands.ascii))
     application.add_handler(CommandHandler("daily", commands.daily))
+    application.add_handler(CommandHandler("fact", commands.fact))
     application.add_handler(CommandHandler("joke", commands.joke))
     application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
     application.add_handler(CommandHandler("me", commands.me))
@@ -64,8 +65,8 @@ if __name__ == "__main__":
                 name="Click Me",
             )
         
-        else:
-            application.add_handler(CommandHandler("test", test_command))
-            print("Running Bot locally for testing")
+    else:
+        application.add_handler(CommandHandler("test", test_command))
+        print("Running Bot locally for testing")
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)

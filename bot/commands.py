@@ -123,6 +123,15 @@ async def daily(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
+async def fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_photo(
+        photo = tools.random_logo(),
+        caption=
+            f"*{constants.PROJECT_NAME} Facts*\n\n"
+            f"{random.choice(constants.FACTS)}",
+        parse_mode="Markdown"
+    )
+
 async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
     joke_response = requests.get("https://v2.jokeapi.dev/joke/Any?safe-mode")
     joke = joke_response.json()
