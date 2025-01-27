@@ -38,7 +38,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("buy", commands.buy))
     application.add_handler(CommandHandler("ca", commands.ca))
     application.add_handler(CommandHandler("chart", commands.chart))
-    application.add_handler(CommandHandler("coinflip", commands.ascii))
+    application.add_handler(CommandHandler("coinflip", commands.coinflip))
     application.add_handler(CommandHandler("daily", commands.daily))
     application.add_handler(CommandHandler("fact", commands.fact))
     application.add_handler(CommandHandler("joke", commands.joke))
