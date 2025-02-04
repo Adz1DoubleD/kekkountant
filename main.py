@@ -58,7 +58,8 @@ if __name__ == "__main__":
         entry_points=[CallbackQueryHandler(callbacks.clicks_time_set_1, pattern="^clicks_time_set$")],
         states={
             callbacks.CLICKS_TIME_SET: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.clicks_time_set_2)],
-        }
+        },
+        fallbacks=[],
     )
     application.add_handler(clicks_time_set_handler)
 
