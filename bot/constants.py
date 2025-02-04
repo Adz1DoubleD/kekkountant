@@ -41,5 +41,9 @@ FACTS = (
     "Keks does not have a penis, however he has participated in many orgies!",
     "As soon as Keks developed legs he got the fuck outta that pond and broadened his horizons."
     "Keks once smashed his banjo over Matt Furies head for spying through the door and drawing him in the bath tub."
-    "When Keks met Vladimir Putin he asked him if it was true that Russian women come inside each other!"
+    "When Keks met Vladimir Putin he asked him if it was true that Russian women come inside each other!",
+    "Keks is a massive fan of a nice cream pie!",
+    "Don’t confuse Keks with any other frog. It makes him very angry. Keks is real ,not a made up comic by some stoner fool!",
+    "Keks is training his AI bots to think more about boobs like normal people do creating a more realistic learning environment. He calls it Artitsficial Intelligence.",
+    "Keks likes to troll Jake Paul on X because he thinks  he is a complete shit head!"
 )
