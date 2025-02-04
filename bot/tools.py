@@ -1,5 +1,6 @@
 import media, random, socket
 
+from bot import db
 
 def escape_markdown(text):
     characters_to_escape = ['*', '_', '`']
@@ -24,7 +25,13 @@ def is_local():
 
 
 def random_button_time():
-    time = random.randint(3600, 86400)
+    hours = db.clicks_time_get()
+    if hours == 0:
+        return None
+    seconds  = hours * 60 * 60
+    if seconds < 1800:
+        return None
+    time = random.randint(1800, seconds)
     return time
 
 

@@ -1,5 +1,5 @@
 from telegram import Update, Message
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 
 import os
 
@@ -51,13 +51,20 @@ if __name__ == "__main__":
 
     application.add_handler(CallbackQueryHandler(callbacks.button_click, pattern=r"^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$"))
-    application.add_handler(CallbackQueryHandler(callbacks.settings_toggle, pattern="^settings_toggle_"))
     application.add_handler(CallbackQueryHandler(callbacks.question_cancel, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(callbacks.question_confirm, pattern="^question:.*"))
 
+    clicks_time_set_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(callbacks.clicks_time_set_1, pattern="^clicks_time_set$")],
+        states={
+            callbacks.CLICKS_TIME_SET: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.clicks_time_set_2)],
+        }
+    )
+    application.add_handler(clicks_time_set_handler)
+
     if not tools.is_local():
         print("Running on server")
-        if db.settings_get("click_me"):
+        if db.clicks_time_get():
             job_queue.run_once(
                 callbacks.button_send,
                 constants.FIRST_BUTTON_TIME,

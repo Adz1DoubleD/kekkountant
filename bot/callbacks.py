@@ -4,10 +4,12 @@ from telegram.ext import ContextTypes, ConversationHandler
 import random, time
 from datetime import datetime
 
-from bot import constants, db, tools
+from bot import admin, constants, db, tools
 from main import application
 
 job_queue = application.job_queue
+
+CLICKS_TIME_SET = 1
 
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -84,31 +86,8 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if not user_id in constants.TG_ADMIN_ID:
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
-    try:
-        result_text = db.clicks_reset()
-        await query.edit_message_text(
-            text=result_text
-        )
-    except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}",
-            show_alert=True
-        )
-
-
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    if not db.settings_get("click_me"):
+    if not db.clicks_time_get():
         return
     
     context.bot_data["first_user_clicked"] = False
@@ -137,6 +116,70 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
 
     context.bot_data["button_generation_timestamp"] = time.time()
     context.bot_data['click_me_id'] = click_me.message_id
+
+
+async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if not user_id in constants.TG_ADMIN_ID:
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    try:
+        result_text = db.clicks_reset()
+        await query.edit_message_text(
+            text=result_text
+        )
+    except Exception as e:
+        await query.answer(
+            text=f"An error occurred: {str(e)}",
+            show_alert=True
+        )
+
+
+async def clicks_time_set_1(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if user_id not in constants.TG_ADMIN_ID:
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    await query.answer()
+
+    await query.message.reply_text(
+        "Send the maximum number of hours you want to set Click Me to:\n\n0 is off",
+    )
+
+    return CLICKS_TIME_SET
+
+
+async def clicks_time_set_2(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+
+    if user_id not in constants.TG_ADMIN_ID:
+        await update.message.reply_text("Admin only.")
+        return ConversationHandler.END
+
+    try:
+        new_value = int(update.message.text)
+        db.clicks_time_set(new_value)
+
+        await update.message.reply_text(f"Click Me max time updated to {new_value}.")
+
+        await admin.command(update, context)  
+
+    except ValueError:
+        await update.message.reply_text("Invalid number. Please enter a valid integer.")
+
+    return ConversationHandler.END
 
 
 async def question_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -177,53 +220,3 @@ async def question_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, c
         text=reply,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
-
-
-async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if not user_id in constants.TG_ADMIN_ID:
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
-    callback_data = query.data
-
-    setting = callback_data.replace("settings_toggle_", "")
-
-    try:
-        current_status = db.settings_get(setting)
-        new_status = not current_status
-        db.settings_set(setting, new_status)
-
-        formatted_setting = setting.replace("_", " ").title()
-        await query.answer(
-            text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
-        )
-
-        settings = db.settings_get_all()
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
-                    callback_data=f"settings_toggle_{s}"
-                )
-            ]
-            for s, v in settings.items()
-        ]
-        keyboard.append(
-            [
-                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
-            ]
-        )
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_reply_markup(reply_markup=reply_markup)
-    except Exception as e:
-        await query.answer(
-        text=f"Error: {e}",
-        show_alert=True
-        )

@@ -179,53 +179,35 @@ async def clicks_update(name, time_taken):
     close_db_connection(db_connection, cursor)
 
 
-def settings_set(setting_name: str, value: bool):
+def clicks_time_set(value: int):
     try:
         db_connection = create_db_connection()
         cursor = db_connection.cursor()
 
         cursor.execute("""
-            UPDATE settings SET value = %s WHERE setting_name = %s
-        """, (1 if value else 0, setting_name))
+            UPDATE settings SET value = %s WHERE setting_name = 'click_me'
+        """, (value,))
         
         db_connection.commit()
     except mysql.connector.Error as e:
-        return f"Error updating {setting_name}: {e}"
+        return f"Error updating click_me: {e}"
     finally:
-        cursor.close()
-        db_connection.close()
+        close_db_connection(db_connection, cursor)
         return "completed"
 
 
-def settings_get(setting_name: str) -> bool:
+def clicks_time_get():
     try:
         db_connection = create_db_connection()
         cursor = db_connection.cursor()
 
         cursor.execute("""
-            SELECT value FROM settings WHERE setting_name = %s
-        """, (setting_name,))
+            SELECT value FROM settings WHERE setting_name = 'click_me'
+        """)
         
         result = cursor.fetchone()
-        cursor.close()
-        db_connection.close()
+        close_db_connection(db_connection, cursor)
 
-        return result[0] == 1 if result else False
-    except mysql.connector.Error as e:
-        return False
-    
-
-def settings_get_all():
-    try:
-        db_connection = create_db_connection()
-        cursor = db_connection.cursor()
-
-        cursor.execute("SELECT setting_name, value FROM settings")
-        results = cursor.fetchall()
-
-        cursor.close()
-        db_connection.close()
-
-        return {setting: value == 1 for setting, value in results}
+        return result[0]
     except mysql.connector.Error:
-        return {}
+        return 0

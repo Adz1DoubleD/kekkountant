@@ -9,38 +9,39 @@ from bot import callbacks, constants, db
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        settings = db.settings_get_all()
-        if not settings:
-            await update.message.reply_text("Error fetching settings.")
-            return
+
+        click_me_value = db.clicks_time_get()
 
         keyboard = [
             [
                 InlineKeyboardButton(
-                    f"{setting.replace('_', ' ').title()}: {'ON' if status else 'OFF'}",
-                    callback_data=f"settings_toggle_{setting}"
+                    f"Change Click Me max time",
+                    callback_data="clicks_time_set"
                 )
-            ]
-            for setting, status in settings.items()
-        ]
-
-        keyboard.append(
+            ],
             [
                 InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
             ]
-        )
+        ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
+        if click_me_value == 0:
+            click_me_str = "Off"
+        else:
+            click_me_str = f"{click_me_value} hours"
         await update.message.reply_text(
-            f"Admin Commands:\n\n"
-            "/click_me - Sends Click me Instantly\n"
-            "/wen - Next click me time", reply_markup=reply_markup)
+            "Click Me Settings:\n\n"
+            f"Click Me max time - {click_me_str}\n"
+            "/click_me - Sends Click Me Instantly\n"
+            "/wen - Next Click Me Time",
+            reply_markup=reply_markup
+        )
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        if db.settings_get("click_me"):
+        if db.clicks_time_get():
             await callbacks.button_send(context)
         else:
             await update.message.reply_text(f"Click Me is disabled")
@@ -50,7 +51,7 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
         if update.effective_chat.type == "private":
-            if db.settings_get("click_me"):
+            if db.clicks_time_get():
                 if constants.BUTTON_TIME is not None:
                     time = constants.BUTTON_TIME
                 else:    
