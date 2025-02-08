@@ -1,11 +1,13 @@
-import media, random, socket
+import random, socket
 
-from bot import db
+from hooks import db
+from media import images
+
 
 def escape_markdown(text):
-    characters_to_escape = ['*', '_', '`']
+    characters_to_escape = ["*", "_", "`"]
     for char in characters_to_escape:
-        text = text.replace(char, '\\' + char)
+        text = text.replace(char, "\\" + char)
     return text
 
 
@@ -28,7 +30,7 @@ def random_button_time():
     hours = db.clicks_time_get()
     if hours == 0:
         return None
-    seconds  = hours * 60 * 60
+    seconds = hours * 60 * 60
     if seconds < 1800:
         return None
     time = random.randint(1800, seconds)
@@ -36,5 +38,5 @@ def random_button_time():
 
 
 def random_logo():
-    random_logo = random.choice(media.logos)
+    random_logo = random.choice(images.LOGOS)
     return random_logo

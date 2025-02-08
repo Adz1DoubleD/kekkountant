@@ -1,9 +1,18 @@
 from telegram import Update, Message
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
 import os
 
-from bot import admin, commands, callbacks, constants, db, tools
+from bot import admin, commands, callbacks, constants
+from hooks import db, tools
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
@@ -49,15 +58,31 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("twitter", commands.twitter))
     application.add_handler(CommandHandler("website", commands.website))
 
-    application.add_handler(CallbackQueryHandler(callbacks.button_click, pattern=r"^click_button:\d+$"))
-    application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$"))
-    application.add_handler(CallbackQueryHandler(callbacks.question_cancel, pattern="^cancel$"))
-    application.add_handler(CallbackQueryHandler(callbacks.question_confirm, pattern="^question:.*"))
+    application.add_handler(
+        CallbackQueryHandler(callbacks.button_click, pattern=r"^click_button:\d+$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.question_cancel, pattern="^cancel$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.question_confirm, pattern="^question:.*")
+    )
 
     clicks_time_set_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(callbacks.clicks_time_set_1, pattern="^clicks_time_set$")],
+        entry_points=[
+            CallbackQueryHandler(
+                callbacks.clicks_time_set_1, pattern="^clicks_time_set$"
+            )
+        ],
         states={
-            callbacks.CLICKS_TIME_SET: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.clicks_time_set_2)],
+            callbacks.CLICKS_TIME_SET: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, callbacks.clicks_time_set_2
+                )
+            ],
         },
         fallbacks=[],
     )
@@ -72,7 +97,7 @@ if __name__ == "__main__":
                 constants.TG_CHANNEL_ID,
                 name="Click Me",
             )
-        
+
     else:
         application.add_handler(CommandHandler("test", test_command))
         print("Running Bot locally for testing")

@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from bot import tools
+from hooks import tools
+
 
 BUTTON_TIME = None
 FIRST_BUTTON_TIME = tools.random_button_time()
@@ -45,5 +46,5 @@ FACTS = (
     "Keks is a massive fan of a nice cream pie!",
     "Don’t confuse Keks with any other frog. It makes him very angry. Keks is real ,not a made up comic by some stoner fool!",
     "Keks is training his AI bots to think more about boobs like normal people do creating a more realistic learning environment. He calls it Artitsficial Intelligence.",
-    "Keks likes to troll Jake Paul on X because he thinks  he is a complete shit head!"
+    "Keks likes to troll Jake Paul on X because he thinks  he is a complete shit head!",
 )
