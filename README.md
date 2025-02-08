@@ -1,4 +1,4 @@
-## Kekkoutant Telegram Bot
+## Kekkountant Telegram Bot
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
@@ -21,13 +21,13 @@ pip install -r requirements.txt
 First, clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/adz1doubled/kekkoutant
+git clone https://github.com/adz1doubled/kekkountant
 ```
 
 Next, navigate to the project folder:
 
 ```bash
-cd kekkoutant
+cd kekkountant
 ```
 
 Then, set up a Python virtual environment to manage your project's dependencies. First, create the virtual environment:
