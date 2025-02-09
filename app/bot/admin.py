@@ -10,13 +10,12 @@ from hooks import db
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-
         click_me_value = db.clicks_time_get()
 
         keyboard = [
             [
                 InlineKeyboardButton(
-                    f"Change Click Me max time", callback_data="clicks_time_set"
+                    "Change Click Me max time", callback_data="clicks_time_set"
                 )
             ],
             [
@@ -46,7 +45,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if db.clicks_time_get():
             await callbacks.button_send(context)
         else:
-            await update.message.reply_text(f"Click Me is disabled")
+            await update.message.reply_text("Click Me is disabled")
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -68,4 +67,4 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds"
                 )
             else:
-                await update.message.reply_text(f"Next Click Me:\n\nDisabled\n\n")
+                await update.message.reply_text("Next Click Me:\n\nDisabled\n\n")

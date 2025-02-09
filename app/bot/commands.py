@@ -1,7 +1,9 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-import io, random, requests
+import io
+import random
+import requests
 from pyfiglet import Figlet
 from gtts import gTTS
 
@@ -13,7 +15,7 @@ async def ascii(update: Update, context: ContextTypes.DEFAULT_TYPE):
     input_text = " ".join(context.args).upper()
     if input_text == "":
         await update.message.reply_text(
-            f"Please follow the command with the word you want to use",
+            "Please follow the command with the word you want to use",
             parse_mode="Markdown",
         )
     else:
@@ -43,7 +45,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text=f"Buy On Uniswap",
+                        text="Buy On Uniswap",
                         url=f"https://app.uniswap.org/#/swap?chain={constants.CHAIN}&outputCurrency={constants.CA}",
                     )
                 ]
@@ -79,7 +81,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=tools.random_logo(),
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text=f"📈 Chart", url=f"{constants.CHART_LINK}")]]
+            [[InlineKeyboardButton(text="📈 Chart", url=f"{constants.CHART_LINK}")]]
         ),
     )
 
@@ -118,8 +120,7 @@ async def daily(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=tools.random_logo(),
-        caption=f"*{constants.PROJECT_NAME} Facts*\n\n"
-        f"{random.choice(constants.FACTS)}",
+        caption=f"*{constants.PROJECT_NAME} Facts*\n\n{random.choice(constants.FACTS)}",
         parse_mode="Markdown",
     )
 
@@ -130,14 +131,14 @@ async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if joke["type"] == "single":
         await update.message.reply_photo(
             photo=tools.random_logo(),
-            caption=f"{constants.PROJECT_NAME} Joke\n\n" f'{joke["joke"]}\n\n',
+            caption=f"{constants.PROJECT_NAME} Joke\n\n{joke['joke']}\n\n",
             parse_mode="Markdown",
         )
     else:
         await update.message.reply_photo(
             photo=tools.random_logo(),
             caption=f"{constants.PROJECT_NAME} Joke\n\n"
-            f'{joke["setup"]}\n\n{joke["delivery"]}\n\n',
+            f"{joke['setup']}\n\n{joke['delivery']}\n\n",
             parse_mode="Markdown",
         )
 

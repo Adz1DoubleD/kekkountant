@@ -1,7 +1,8 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
-import random, time
+import random
+import time
 from datetime import datetime
 
 from bot import admin, constants
@@ -137,7 +138,7 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
 
-    if not user_id in constants.TG_ADMIN_ID:
+    if user_id not in constants.TG_ADMIN_ID:
         await query.answer(text="Admin only.", show_alert=True)
         return
 
@@ -191,7 +192,7 @@ async def question_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         await query.edit_message_text(text="Action canceled. No changes were made.")
-    except Exception as e:
+    except Exception:
         await update.message.reply_text(text="Action canceled. No changes were made.")
 
     return ConversationHandler.END
