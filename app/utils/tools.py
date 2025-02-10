@@ -1,8 +1,10 @@
 import random
 import socket
 
-from hooks import db
 from media import images
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 
 def escape_markdown(text):
@@ -28,7 +30,7 @@ def is_local():
 
 
 def random_button_time():
-    hours = db.clicks_time_get()
+    hours = db.get_click_time()
     if hours == 0:
         return None
     seconds = hours * 60 * 60

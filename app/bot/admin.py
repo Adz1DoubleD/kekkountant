@@ -4,13 +4,15 @@ from telegram.ext import ContextTypes
 from datetime import datetime, timedelta
 
 from bot import callbacks, constants
-from hooks import db
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        click_me_value = db.clicks_time_get()
+        click_me_value = db.get_click_time()
 
         keyboard = [
             [
@@ -42,7 +44,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        if db.clicks_time_get():
+        if db.get_click_time():
             await callbacks.button_send(context)
         else:
             await update.message.reply_text("Click Me is disabled")
@@ -52,7 +54,7 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
         if update.effective_chat.type == "private":
-            if db.clicks_time_get():
+            if db.get_click_time():
                 if constants.BUTTON_TIME is not None:
                     time = constants.BUTTON_TIME
                 else:

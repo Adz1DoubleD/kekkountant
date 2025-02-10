@@ -6,8 +6,11 @@ import time
 from datetime import datetime
 
 from bot import admin, constants
-from hooks import db, tools
 from main import application
+from utils import tools
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 job_queue = application.job_queue
 
@@ -38,13 +41,13 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time_taken = button_click_timestamp - button_generation_timestamp
     formatted_time_taken = tools.format_seconds(time_taken)
 
-    await db.clicks_update(user_info, time_taken)
+    await db.update_clicks(user_info, time_taken)
 
     context.bot_data["first_user_clicked"] = True
 
-    user_data = db.clicks_get_by_name(user_info)
+    user_data = db.get_by_name(user_info)
     clicks, _, streak = user_data
-    total_click_count = db.clicks_get_total()
+    total_click_count = db.get_total_clicks()
 
     if clicks == 1:
         user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
@@ -53,7 +56,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user_count_message = f"They have been the fastest player {clicks} times and on a *{streak}* click streak!"
 
-    if db.clicks_check_is_fastest(time_taken):
+    if db.check_is_fastest(time_taken):
         user_count_message += (
             f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
         )
@@ -93,7 +96,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    if not db.clicks_time_get():
+    if not db.get_click_time():
         return
 
     context.bot_data["first_user_clicked"] = False
@@ -143,7 +146,7 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        result_text = db.clicks_reset()
+        result_text = db.reset_leaderboard()
         await query.edit_message_text(text=result_text)
     except Exception as e:
         await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)
@@ -175,7 +178,7 @@ async def clicks_time_set_2(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         new_value = int(update.message.text)
-        db.clicks_time_set(new_value)
+        db.set_click_time(new_value)
 
         await update.message.reply_text(f"Click Me max time updated to {new_value}.")
 

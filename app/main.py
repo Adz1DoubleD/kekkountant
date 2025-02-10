@@ -12,7 +12,10 @@ from telegram.ext import (
 import os
 
 from bot import admin, commands, callbacks, constants
-from hooks import db, tools
+from utils import tools
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
@@ -90,7 +93,7 @@ if __name__ == "__main__":
 
     if not tools.is_local():
         print("Running on server")
-        if db.clicks_time_get():
+        if db.get_click_time():
             job_queue.run_once(
                 callbacks.button_send,
                 constants.FIRST_BUTTON_TIME,
