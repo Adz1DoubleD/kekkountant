@@ -1,3 +1,4 @@
-from media import media_path
+from pathlib import Path
 
-LOGOS = [media_path(f"images/{i}.jpg") for i in range(1, 4)]
+
+LOGOS = [Path(__file__).resolve().parent / f"{i}.jpg" for i in range(1, 4)]
