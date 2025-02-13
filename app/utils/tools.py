@@ -26,7 +26,7 @@ def format_seconds(seconds):
     if minutes > 0:
         return f"{minutes} minutes and {remaining_seconds:.0f} seconds"
     else:
-        return f"{remaining_seconds:.3f} secconds"
+        return f"{remaining_seconds:.3f} seconds"
 
 
 def is_local():

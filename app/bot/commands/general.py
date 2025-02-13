@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 import io
 import random
 import requests
+from datetime import datetime
 from pyfiglet import Figlet
 from gtts import gTTS
 
@@ -232,6 +233,40 @@ async def say(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    now = datetime.now()
+    url = f"https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/all/{now.month}/{now.day}"
+
+    response = requests.get(url)
+    data = response.json()
+
+    if (
+        "selected" in data
+        and isinstance(data["selected"], list)
+        and len(data["selected"]) > 0
+    ):
+        random_event = random.choice(data["selected"])
+
+        event_text = random_event.get("text", "No description available.")
+        year = random_event.get("year", "Unknown Year")
+
+        event_pages = random_event.get("pages", [])
+        wiki_url = (
+            event_pages[0]["content_urls"]["desktop"]["page"]
+            if event_pages
+            else "No link available."
+        )
+
+        today_info = f"📅 *{year}*: {event_text}\n🔗 [Read more]({wiki_url})"
+
+    today_info = "⚠️ No historical events found for today."
+    await update.message.reply_photo(
+        photo=tools.random_logo(),
+        caption=f"*{constants.PROJECT_NAME} Today in history*\n\n{today_info}",
+        parse_mode="Markdown",
+    )
+
+
 async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=tools.random_logo(),
@@ -264,6 +299,53 @@ async def website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def word(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        word = " ".join(context.args).lower()
+        if word == "":
+            await update.message.reply_text(
+                "Please use /word followed by the word you want to search"
+            )
+            return
+        url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+        response = requests.get(url)
+        data = response.json()
+
+        definition = None
+        audio_url = None
+
+        if data and isinstance(data, list):
+            meanings = data[0].get("meanings", [])
+            if meanings:
+                for meaning in meanings:
+                    definitions = meaning.get("definitions", [])
+                    if definitions:
+                        definition = definitions[0].get("definition")
+                        break
+
+            phonetics = data[0].get("phonetics", [])
+            if phonetics:
+                first_phonetic = phonetics[0]
+                audio_url = first_phonetic.get("audio")
+
+        caption = f"*{constants.PROJECT_NAME} Dictionary*\n\n{word}:\n\n{definition}"
+        keyboard_markup = None
+
+        if audio_url:
+            keyboard_markup = InlineKeyboardMarkup(
+                [[InlineKeyboardButton(text="Pronunciation", url=f"{audio_url}")]]
+            )
+
+        await update.message.reply_photo(
+            photo=tools.random_logo(),
+            caption=caption,
+            parse_mode="Markdown",
+            reply_markup=keyboard_markup,
+        )
+    except Exception:
+        await update.message.reply_text("Word not found")
+
+
 HANDLERS = [
     (func.__name__.split("_")[0], func, description)
     for func, description in [
@@ -279,7 +361,9 @@ HANDLERS = [
         (me, "My Click Me stats"),
         (roll, "Roll a number"),
         (say, "Text to speech"),
+        (today_command, "Today in history"),
         (twitter, "Twiitter link"),
         (website, "Website link"),
+        (word, "Dictionary"),
     ]
 ]
