@@ -5,17 +5,22 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     ConversationHandler,
-    MessageHandler,
-    filters,
 )
 
 import os
+from telegram.warnings import PTBUserWarning
+from warnings import filterwarnings
 
-from bot import admin, commands, callbacks, constants
+from bot import callbacks, conversations
+from bot.commands import admin, general
 from utils import tools
 from services import get_dbmanager
 
 db = get_dbmanager()
+
+filterwarnings(
+    action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
+)
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
@@ -39,70 +44,60 @@ async def error(update: Update, context):
             print(f"Error occurred without a valid message: {context.error}")
 
 
-if __name__ == "__main__":
+def init_bot():
     application.add_error_handler(error)
 
-    application.add_handler(CommandHandler(["click_me", "clickme"], admin.click_me))
-    application.add_handler(CommandHandler("settings", admin.command))
-    application.add_handler(CommandHandler("wen", admin.wen))
+    for cmd, handler, _ in general.HANDLERS:
+        if isinstance(cmd, list):
+            for alias in cmd:
+                application.add_handler(CommandHandler(alias, handler))
+        else:
+            application.add_handler(CommandHandler(cmd, handler))
 
-    application.add_handler(CommandHandler("ascii", commands.ascii))
-    application.add_handler(CommandHandler("buy", commands.buy))
-    application.add_handler(CommandHandler("ca", commands.ca))
-    application.add_handler(CommandHandler("chart", commands.chart))
-    application.add_handler(CommandHandler("coinflip", commands.coinflip))
-    application.add_handler(CommandHandler("daily", commands.daily))
-    application.add_handler(CommandHandler("fact", commands.fact))
-    application.add_handler(CommandHandler("joke", commands.joke))
-    application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
-    application.add_handler(CommandHandler("me", commands.me))
-    application.add_handler(CommandHandler("roll", commands.roll))
-    application.add_handler(CommandHandler("say", commands.say))
-    application.add_handler(CommandHandler("twitter", commands.twitter))
-    application.add_handler(CommandHandler("website", commands.website))
+    for cmd, handler, _ in admin.HANDLERS:
+        application.add_handler(CommandHandler(cmd, handler))
 
-    application.add_handler(
-        CallbackQueryHandler(callbacks.button_click, pattern=r"^click_button:\d+$")
-    )
-    application.add_handler(
-        CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$")
-    )
-    application.add_handler(
-        CallbackQueryHandler(callbacks.question_cancel, pattern="^cancel$")
-    )
-    application.add_handler(
-        CallbackQueryHandler(callbacks.question_confirm, pattern="^question:.*")
-    )
+    for handler, pattern in callbacks.HANDLERS:
+        application.add_handler(CallbackQueryHandler(handler, pattern=pattern))
 
-    clicks_time_set_handler = ConversationHandler(
-        entry_points=[
-            CallbackQueryHandler(
-                callbacks.clicks_time_set_1, pattern="^clicks_time_set$"
+    for handler in conversations.HANDLERS:
+        application.add_handler(
+            ConversationHandler(
+                entry_points=handler["entry_points"],
+                states=handler["states"],
+                fallbacks=handler.get(
+                    "fallbacks",
+                    [],
+                ),
             )
-        ],
-        states={
-            callbacks.CLICKS_TIME_SET: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, callbacks.clicks_time_set_2
-                )
-            ],
-        },
-        fallbacks=[],
-    )
-    application.add_handler(clicks_time_set_handler)
+        )
+
+    for handler_data in conversations.HANDLERS:
+        application.add_handler(
+            ConversationHandler(
+                entry_points=handler_data["entry_points"],
+                states=handler_data["states"],
+                fallbacks=handler_data.get("fallbacks", []),
+            )
+        )
+
+
+def start():
+    print("🔄 Initializing bot...")
+    init_bot()
 
     if not tools.is_local():
-        print("Running on server")
-        if db.get_click_time():
-            job_queue.run_once(
-                callbacks.button_send,
-                constants.FIRST_BUTTON_TIME,
-                constants.TG_CHANNEL_ID,
-                name="Click Me",
-            )
+        print("✅ Bot Running on server")
+
+        general_commands, admin_commands = tools.update_bot_commands()
+        print(general_commands)
+        print(admin_commands)
 
     else:
-        application.add_handler(CommandHandler("test", test_command))
-        print("Running Bot locally for testing")
+        print("✅ Bot Running locally")
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+
+if __name__ == "__main__":
+    start()

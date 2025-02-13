@@ -262,3 +262,24 @@ async def website(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
+
+
+HANDLERS = [
+    (func.__name__.split("_")[0], func, description)
+    for func, description in [
+        (buy, "Buy link"),
+        (ascii, "Create ASCII art"),
+        (ca, "Contract Address"),
+        (chart, "Chart link"),
+        (coinflip, "Flip a coin"),
+        (daily, "Daily tasks"),
+        (daily, "Random fact"),
+        (joke, "Random joke"),
+        (leaderboard, "Click Me leaderboard"),
+        (me, "My Click Me stats"),
+        (roll, "Roll a number"),
+        (say, "Text to speech"),
+        (twitter, "Twiitter link"),
+        (website, "Website link"),
+    ]
+]

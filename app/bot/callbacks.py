@@ -5,7 +5,8 @@ import random
 import time
 from datetime import datetime
 
-from bot import admin, constants
+from bot.commands import admin
+from bot import constants
 from main import application
 from utils import tools
 from services import get_dbmanager
@@ -225,3 +226,11 @@ async def question_confirm(
     await query.edit_message_text(
         text=reply, reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+
+HANDLERS = [
+    (button_click, r"^click_button:\d+$"),
+    (clicks_reset, r"^clicks_reset$"),
+    (question_cancel, "^cancel$"),
+    (question_confirm, "^question:.*"),
+]

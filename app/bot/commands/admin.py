@@ -9,7 +9,7 @@ from services import get_dbmanager
 db = get_dbmanager()
 
 
-async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
         click_me_value = db.get_click_time()
@@ -41,7 +41,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
         if db.get_click_time():
@@ -70,3 +70,13 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             else:
                 await update.message.reply_text("Next Click Me:\n\nDisabled\n\n")
+
+
+HANDLERS = [
+    (func.__name__.split("_")[0], func, description)
+    for func, description in [
+        (clickme, "Send Click Me"),
+        (settings_command, "Bot Settings"),
+        (wen, "Wen nect Click Me"),
+    ]
+]
