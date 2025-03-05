@@ -1,147 +1,131 @@
-import mysql.connector
+import aiomysql
 import os
 
 
 class DBManager:
     def __init__(self):
-        self.connection = None
-        self.cursor = None
+        self.pool = None
+        self.host = os.getenv("DB_HOST")
+        self.user = os.getenv("DB_USER")
+        self.password = os.getenv("DB_PASSWORD")
+        self.database = os.getenv("DB_NAME")
+        self.port = int(os.getenv("DB_PORT"))
 
-    def connect(self):
-        self.connection = mysql.connector.connect(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            database=os.getenv("DB_NAME"),
-            port=os.getenv("DB_PORT"),
-        )
-        self.cursor = self.connection.cursor(dictionary=True)
-
-    def close(self):
-        if self.cursor:
-            self.cursor.close()
-        if self.connection:
-            self.connection.close()
-
-    def check_is_fastest(self, time_to_check):
-        try:
-            self.connect()
-            self.cursor.execute(
-                "SELECT MIN(time_taken) FROM leaderboard WHERE time_taken IS NOT NULL"
+    async def _get_pool(self):
+        if self.pool is None:
+            self.pool = await aiomysql.create_pool(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                db=self.database,
+                port=self.port,
+                autocommit=True,
+                cursorclass=aiomysql.DictCursor,
             )
-            fastest_time = self.cursor.fetchone()["MIN(time_taken)"]
+        return self.pool
 
-            if isinstance(time_to_check, (int, float)) and isinstance(
-                fastest_time, (int, float)
-            ):
-                return time_to_check < fastest_time
+    async def _execute_query(
+        self, query, params=None, fetch_one=False, fetch_all=False
+    ):
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(query, params or ())
+                if fetch_one:
+                    return await cur.fetchone()
+                if fetch_all:
+                    return await cur.fetchall()
+                return None
 
-            return None
-        except mysql.connector.Error:
-            return None
-        finally:
-            self.close()
-
-    def check_highest_streak(self):
+    async def check_is_fastest(self, time_to_check):
         try:
-            self.connect()
-            self.cursor.execute(
+            result = await self._execute_query(
+                "SELECT MIN(time_taken) FROM leaderboard WHERE time_taken IS NOT NULL",
+                fetch_one=True,
+            )
+            fastest_time = result["MIN(time_taken)"]
+            return time_to_check < fastest_time if fastest_time else None
+        except Exception:
+            return None
+
+    async def check_highest_streak(self):
+        try:
+            return await self._execute_query(
                 """
                 SELECT name, streak FROM leaderboard
                 WHERE streak = (SELECT MAX(streak) FROM leaderboard WHERE streak > 0)
                 LIMIT 1
-                """
+                """,
+                fetch_one=True,
             )
-            result = self.cursor.fetchone()
-            return result if result else None
-        except mysql.connector.Error:
+        except Exception:
             return None
-        finally:
-            self.close()
 
-    def get_fastest_time(self):
+    async def get_fastest_time(self):
         try:
-            self.connect()
-            self.cursor.execute(
+            result = await self._execute_query(
                 """
                 SELECT name, MIN(time_taken) FROM leaderboard
                 WHERE time_taken = (SELECT MIN(time_taken) FROM leaderboard WHERE time_taken IS NOT NULL)
-                """
+                """,
+                fetch_one=True,
             )
-            result = self.cursor.fetchone()
             return result if result else ("No user", 0)
-        except mysql.connector.Error:
+        except Exception:
             return ("No user", 0)
-        finally:
-            self.close()
 
-    def get_by_name(self, name):
+    async def get_by_name(self, name):
         try:
-            self.connect()
-            self.cursor.execute(
+            result = await self._execute_query(
                 "SELECT clicks, time_taken, streak FROM leaderboard WHERE name = %s",
                 (name,),
+                fetch_one=True,
             )
-            result = self.cursor.fetchone()
-            return result if result else (0, 0, 0)
-        except mysql.connector.Error:
-            return (0, 0, 0)
-        finally:
-            self.close()
+            return result if result else {"clicks": 0, "time_taken": 0, "streak": 0}
+        except Exception:
+            return {"clicks": 0, "time_taken": 0, "streak": 0}
 
-    def get_leaderboard(self, limit=10):
+    async def get_leaderboard(self, limit=10):
         try:
-            self.connect()
-            self.cursor.execute(
+            results = await self._execute_query(
                 "SELECT name, clicks FROM leaderboard ORDER BY clicks DESC LIMIT %s",
                 (limit,),
+                fetch_all=True,
             )
-            leaderboard_data = self.cursor.fetchall()
-            leaderboard_text = "\n".join(
-                [
-                    f"{rank + 1} {row['name']}: {row['clicks']}"
-                    for rank, row in enumerate(leaderboard_data)
-                ]
+            return "\n".join(
+                f"{rank + 1} {row['name']}: {row['clicks']}"
+                for rank, row in enumerate(results)
             )
-            return leaderboard_text
-        except mysql.connector.Error:
+        except Exception:
             return "Error retrieving leaderboard data"
-        finally:
-            self.close()
 
-    def get_total_clicks(self):
+    async def get_total_clicks(self):
         try:
-            self.connect()
-            self.cursor.execute("SELECT SUM(clicks) FROM leaderboard")
-            total_clicks = self.cursor.fetchone()["SUM(clicks)"]
-            return total_clicks if total_clicks else 0
-        except mysql.connector.Error:
+            result = await self._execute_query(
+                "SELECT SUM(clicks) FROM leaderboard",
+                fetch_one=True,
+            )
+            return result["SUM(clicks)"] if result["SUM(clicks)"] else 0
+        except Exception:
             return 0
-        finally:
-            self.close()
 
-    def reset_leaderboard(self):
+    async def reset_leaderboard(self):
         try:
-            self.connect()
-            self.cursor.execute("DELETE FROM leaderboard")
-            self.connection.commit()
+            await self._execute_query("DELETE FROM leaderboard")
             return "Clicks leaderboard reset successfully"
-        except mysql.connector.Error:
+        except Exception:
             return "Error resetting clicks"
-        finally:
-            self.close()
 
     async def update_clicks(self, name, time_taken):
         try:
-            self.connect()
-            self.cursor.execute(
+            user_data = await self._execute_query(
                 "SELECT clicks, time_taken, streak FROM leaderboard WHERE name = %s",
                 (name,),
+                fetch_one=True,
             )
-            user_data = self.cursor.fetchone()
 
-            if user_data is None:
-                self.cursor.execute(
+            if not user_data:
+                await self._execute_query(
                     """
                     INSERT INTO leaderboard (name, clicks, time_taken, streak)
                     VALUES (%s, 1, %s, 1)
@@ -149,14 +133,16 @@ class DBManager:
                     (name, time_taken),
                 )
             else:
-                clicks, current_time_taken, current_streak = user_data.values()
+                clicks = user_data["clicks"]
+                current_time_taken = user_data["time_taken"]
+                current_streak = user_data["streak"]
                 new_time = (
                     min(time_taken, current_time_taken)
                     if current_time_taken
                     else time_taken
                 )
 
-                self.cursor.execute(
+                await self._execute_query(
                     """
                     UPDATE leaderboard
                     SET clicks = %s, time_taken = %s, streak = %s
@@ -165,38 +151,11 @@ class DBManager:
                     (clicks + 1, new_time, current_streak + 1, name),
                 )
 
-            self.cursor.execute(
-                "UPDATE leaderboard SET streak = 0 WHERE name <> %s", (name,)
+            await self._execute_query(
+                "UPDATE leaderboard SET streak = 0 WHERE name <> %s",
+                (name,),
             )
 
-            self.connection.commit()
             return "Click updated successfully"
-        except mysql.connector.Error as e:
+        except Exception as e:
             return f"Error updating clicks: {e}"
-        finally:
-            self.close()
-
-    def set_click_time(self, value: int):
-        try:
-            self.connect()
-            self.cursor.execute(
-                "UPDATE settings SET value = %s WHERE setting_name = 'click_me'",
-                (value,),
-            )
-            self.connection.commit()
-            return "Completed"
-        except mysql.connector.Error as e:
-            return f"Error updating click_me: {e}"
-        finally:
-            self.close()
-
-    def get_click_time(self):
-        try:
-            self.connect()
-            self.cursor.execute(
-                "SELECT value FROM settings WHERE setting_name = 'click_me'"
-            )
-            result = self.cursor.fetchone()
-            return result["value"] if result else 0
-        except mysql.connector.Error:
-            return

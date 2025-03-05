@@ -12,14 +12,7 @@ db = get_dbmanager()
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        click_me_value = db.get_click_time()
-
         keyboard = [
-            [
-                InlineKeyboardButton(
-                    "Change Click Me max time", callback_data="clicks_time_set"
-                )
-            ],
             [
                 InlineKeyboardButton(
                     "Reset Clicks", callback_data="question:clicks_reset"
@@ -28,13 +21,9 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        if click_me_value == 0:
-            click_me_str = "Off"
-        else:
-            click_me_str = f"{click_me_value} hours"
+
         await update.message.reply_text(
             "Click Me Settings:\n\n"
-            f"Click Me max time - {click_me_str}\n"
             "/click_me - Sends Click Me Instantly\n"
             "/wen - Next Click Me Time",
             reply_markup=reply_markup,
@@ -44,7 +33,7 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
-        if db.get_click_time():
+        if constants.ENABLED:
             await callbacks.button_send(context)
         else:
             await update.message.reply_text("Click Me is disabled")
@@ -54,7 +43,7 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in constants.TG_ADMIN_ID:
         if update.effective_chat.type == "private":
-            if db.get_click_time():
+            if constants.ENABLED:
                 if constants.BUTTON_TIME is not None:
                     time = constants.BUTTON_TIME
                 else:

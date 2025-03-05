@@ -2,12 +2,12 @@ from datetime import datetime
 
 from utils import tools
 
+ENABLED = True
+MAX_CLICK_SECONDS = 86400
 
-BUTTON_TIME = None
-FIRST_BUTTON_TIME = tools.random_button_time()
-RESTART_TIME = datetime.now().timestamp()
 TG_ADMIN_ID = [6509684511, 1667971437]
 TG_CHANNEL_ID = "-1002263903835"
+
 PROJECT_NAME = "Kekkountant"
 TWITTER = "kekkekkountant"
 WEBSITE = "kekkountant.com"
@@ -48,3 +48,7 @@ FACTS = (
     "Keks is training his AI bots to think more about boobs like normal people do creating a more realistic learning environment. He calls it Artitsficial Intelligence.",
     "Keks likes to troll Jake Paul on X because he thinks  he is a complete shit head!",
 )
+
+FIRST_BUTTON_TIME = tools.random_button_time()
+RESTART_TIME = datetime.now().timestamp()
+BUTTON_TIME = None

@@ -1,6 +1,6 @@
+import aiohttp
 import os
 import random
-import requests
 import socket
 
 from bot import constants
@@ -35,13 +35,7 @@ def is_local():
 
 
 def random_button_time():
-    hours = db.get_click_time()
-    if hours == 0:
-        return None
-    seconds = hours * 60 * 60
-    if seconds < 1800:
-        return None
-    time = random.randint(1800, seconds)
+    time = random.randint(3600, constants.MAX_CLICK_SECONDS)
     return time
 
 
@@ -50,7 +44,7 @@ def random_logo():
     return random_logo
 
 
-def update_bot_commands():
+async def update_bot_commands():
     url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}/setMyCommands"
 
     general_commands = [
@@ -66,35 +60,44 @@ def update_bot_commands():
     ]
 
     all_commands = general_commands + admin_commands
-
-    user_response = requests.post(
-        url, json={"commands": general_commands, "scope": {"type": "default"}}
-    )
-
-    general_result = (
-        "✅ General commands updated"
-        if user_response.status_code == 200
-        else f"⚠️ Failed to update general commands: {user_response.text}"
-    )
-
+    results = []
     failed_admins = []
-    for admin_id in constants.TG_ADMIN_ID:
-        admin_response = requests.post(
-            url,
-            json={
-                "commands": all_commands,
-                "scope": {"type": "chat", "chat_id": int(admin_id)},
-            },
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            url, json={"commands": general_commands, "scope": {"type": "default"}}
+        ) as response:
+            results.append(
+                "✅ General commands updated"
+                if response.status == 200
+                else f"⚠️ Failed to update commands: {await response.text()}"
+            )
+
+        for admin_id in constants.TG_ADMIN_ID:
+            try:
+                async with session.post(
+                    url,
+                    json={
+                        "commands": all_commands,
+                        "scope": {"type": "chat", "chat_id": int(admin_id)},
+                    },
+                ) as response:
+                    if response.status == 200:
+                        results.append(f"✅ Admin commands updated for {admin_id}")
+                    else:
+                        failed_admins.append(admin_id)
+                        results.append(
+                            f"⚠️ Failed to update Admin commands for {admin_id}: {await response.text()}"
+                        )
+            except Exception as e:
+                failed_admins.append(admin_id)
+                results.append(
+                    f"⚠️ Error updating Admin commands for {admin_id}: {str(e)}"
+                )
+
+    if failed_admins:
+        results.append(
+            f"❌ Failed to update commands for admins: {', '.join(str(id) for id in failed_admins)}"
         )
 
-        if admin_response.status_code != 200:
-            failed_admins.append(f"{admin_id}: {admin_response.text}")
-
-    if not failed_admins:
-        admin_result = "✅ Admin commands updated"
-    else:
-        admin_result = "⚠️ Failed to update commands for some admins:\n" + "\n".join(
-            failed_admins
-        )
-
-    return general_result, admin_result
+    return "\n".join(results)

@@ -1,17 +1,16 @@
 from telegram import Update, Message
 from telegram.ext import (
-    ApplicationBuilder,
+    Application,
     CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
-    ConversationHandler,
 )
 
 import os
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
 
-from bot import callbacks, conversations
+from bot import callbacks, constants
 from bot.commands import admin, general
 from utils import tools
 from services import get_dbmanager
@@ -22,7 +21,7 @@ filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
 )
 
-application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+application = Application.uilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
 
@@ -45,6 +44,7 @@ async def error(update: Update, context):
 
 
 def init_bot():
+    print("🔄 Initializing main bot...")
     application.add_error_handler(error)
 
     for cmd, handler, _ in general.HANDLERS:
@@ -60,38 +60,21 @@ def init_bot():
     for handler, pattern in callbacks.HANDLERS:
         application.add_handler(CallbackQueryHandler(handler, pattern=pattern))
 
-    for handler in conversations.HANDLERS:
-        application.add_handler(
-            ConversationHandler(
-                entry_points=handler["entry_points"],
-                states=handler["states"],
-                fallbacks=handler.get(
-                    "fallbacks",
-                    [],
-                ),
-            )
-        )
-
-    for handler_data in conversations.HANDLERS:
-        application.add_handler(
-            ConversationHandler(
-                entry_points=handler_data["entry_points"],
-                states=handler_data["states"],
-                fallbacks=handler_data.get("fallbacks", []),
-            )
-        )
+    print("✅ Main bot initialized")
 
 
-def start():
-    print("🔄 Initializing bot...")
-    init_bot()
-
+async def post_init(application: Application):
     if not tools.is_local():
         print("✅ Bot Running on server")
+        if constants.ENABLED:
+            application.job_queue.run_once(
+                callbacks.button_send,
+                constants.FIRST_BUTTON_TIME,
+                constants.TG_CHANNEL_ID,
+                name="Click Me",
+            )
 
-        general_commands, admin_commands = tools.update_bot_commands()
-        print(general_commands)
-        print(admin_commands)
+        print(await tools.update_bot_commands())
 
     else:
         print("✅ Bot Running locally")
@@ -100,4 +83,6 @@ def start():
 
 
 if __name__ == "__main__":
-    start()
+    init_bot()
+    application.post_init = post_init
+    application.run_polling(allowed_updates=Update.ALL_TYPES)

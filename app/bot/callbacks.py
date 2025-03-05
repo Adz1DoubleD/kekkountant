@@ -5,7 +5,6 @@ import random
 import time
 from datetime import datetime
 
-from bot.commands import admin
 from bot import constants
 from main import application
 from utils import tools
@@ -14,8 +13,6 @@ from services import get_dbmanager
 db = get_dbmanager()
 
 job_queue = application.job_queue
-
-CLICKS_TIME_SET = 1
 
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,9 +43,9 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.bot_data["first_user_clicked"] = True
 
-    user_data = db.get_by_name(user_info)
+    user_data = await db.get_by_name(user_info)
     clicks, _, streak = user_data
-    total_click_count = db.get_total_clicks()
+    total_click_count = await db.get_total_clicks()
 
     if clicks == 1:
         user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
@@ -57,7 +54,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user_count_message = f"They have been the fastest player {clicks} times and on a *{streak}* click streak!"
 
-    if db.check_is_fastest(time_taken):
+    if await db.check_is_fastest(time_taken):
         user_count_message += (
             f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
         )
@@ -97,7 +94,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    if not db.get_click_time():
+    if not constants.ENABLED:
         return
 
     context.bot_data["first_user_clicked"] = False
@@ -147,48 +144,10 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        result_text = db.reset_leaderboard()
+        result_text = await db.reset_leaderboard()
         await query.edit_message_text(text=result_text)
     except Exception as e:
         await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)
-
-
-async def clicks_time_set_1(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id not in constants.TG_ADMIN_ID:
-        await query.answer(text="Admin only.", show_alert=True)
-        return
-
-    await query.answer()
-
-    await query.message.reply_text(
-        "Send the maximum number of hours you want to set Click Me to:\n\n0 is off",
-    )
-
-    return CLICKS_TIME_SET
-
-
-async def clicks_time_set_2(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-
-    if user_id not in constants.TG_ADMIN_ID:
-        await update.message.reply_text("Admin only.")
-        return ConversationHandler.END
-
-    try:
-        new_value = int(update.message.text)
-        db.set_click_time(new_value)
-
-        await update.message.reply_text(f"Click Me max time updated to {new_value}.")
-
-        await admin.command(update, context)
-
-    except ValueError:
-        await update.message.reply_text("Invalid number. Please enter a valid integer.")
-
-    return ConversationHandler.END
 
 
 async def question_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):

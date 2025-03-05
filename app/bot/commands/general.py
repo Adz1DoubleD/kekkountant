@@ -148,10 +148,10 @@ async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    board = db.get_leaderboard()
-    click_counts_total = db.get_total_clicks()
-    fastest_user, fastest_time = db.get_fastest_time()
-    streak_user, streak_value = db.check_highest_streak()
+    board = await db.get_leaderboard()
+    click_counts_total = await db.get_total_clicks()
+    fastest_user, fastest_time = await db.get_fastest_time()
+    streak_user, streak_value = await db.check_highest_streak()
     formatted_fastest_time = tools.format_seconds(fastest_time)
 
     message = (
@@ -172,7 +172,7 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_info = (
         user.username or f"{user.first_name} {user.last_name}" or user.first_name
     )
-    info = db.get_by_name(user_info)
+    info = await db.get_by_name(user_info)
 
     await update.message.reply_text(
         f"{user_info}\n\n"
