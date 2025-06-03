@@ -11,10 +11,12 @@ TG_CHANNEL_ID = "-1002263903835"
 PROJECT_NAME = "Kekkountant"
 TWITTER = "kekkekkountant"
 WEBSITE = "kekkountant.com"
-CA = None
-CHAIN = ""
-CHART_LINK = ""
-TICKER = ""
+CA = "6QMuZm3FHFUhsj14Uq7SdkjUZXA1Phg6XRcA4JTRpump"
+CHAIN = "SOL"
+CHART_LINK = (
+    "https://dexscreener.com/solana/hnkxg8nzkrxray3d1xjmxinw6xhgszgavawmjmfqmxx1"
+)
+TICKER = "Keks"
 
 FACTS = (
     "Keks once dated popular singer Rhianna. It didn’t work out because she’s wasn’t sexually aggressive enough!",

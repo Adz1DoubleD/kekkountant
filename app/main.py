@@ -21,7 +21,7 @@ filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
 )
 
-application = Application.uilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
 
@@ -78,8 +78,6 @@ async def post_init(application: Application):
 
     else:
         print("✅ Bot Running locally")
-
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

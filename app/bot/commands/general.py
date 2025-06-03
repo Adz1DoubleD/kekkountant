@@ -34,30 +34,6 @@ async def ascii(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not constants.CA:
-        await update.message.reply_photo(
-            photo=tools.random_logo(),
-            caption=f"*{constants.PROJECT_NAME} CA*\n\nComing Soon!\n\n",
-            parse_mode="Markdown",
-        )
-        return
-
-    await update.message.reply_photo(
-        photo=tools.random_logo(),
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Buy On Uniswap",
-                        url=f"https://app.uniswap.org/#/swap?chain={constants.CHAIN}&outputCurrency={constants.CA}",
-                    )
-                ]
-            ]
-        ),
-    )
-
-
 async def ca(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not constants.CA:
         await update.message.reply_photo(
@@ -349,7 +325,6 @@ async def word(update: Update, context: ContextTypes.DEFAULT_TYPE):
 HANDLERS = [
     (func.__name__.split("_")[0], func, description)
     for func, description in [
-        (buy, "Buy link"),
         (ascii, "Create ASCII art"),
         (ca, "Contract Address"),
         (chart, "Chart link"),
