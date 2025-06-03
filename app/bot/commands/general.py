@@ -330,7 +330,7 @@ HANDLERS = [
         (chart, "Chart link"),
         (coinflip, "Flip a coin"),
         (daily, "Daily tasks"),
-        (daily, "Random fact"),
+        (fact, "Random fact"),
         (joke, "Random joke"),
         (leaderboard, "Click Me leaderboard"),
         (me, "My Click Me stats"),
