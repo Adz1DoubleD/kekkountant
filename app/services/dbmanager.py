@@ -50,7 +50,7 @@ class DBManager:
 
     async def check_highest_streak(self):
         try:
-            return await self._execute_query(
+            result = await self._execute_query(
                 """
                 SELECT name, streak FROM leaderboard
                 WHERE streak = (SELECT MAX(streak) FROM leaderboard WHERE streak > 0)
@@ -58,8 +58,9 @@ class DBManager:
                 """,
                 fetch_one=True,
             )
+            return result["name"], result["streak"] if result else ("No user", 0)
         except Exception:
-            return None
+            return ("No user", 0)
 
     async def get_fastest_time(self):
         try:
@@ -70,7 +71,10 @@ class DBManager:
                 """,
                 fetch_one=True,
             )
-            return result if result else ("No user", 0)
+            return result["name"], result["MIN(time_taken)"] if result else (
+                "No user",
+                0,
+            )
         except Exception:
             return ("No user", 0)
 
