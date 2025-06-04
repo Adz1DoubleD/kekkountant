@@ -85,7 +85,13 @@ class DBManager:
                 (name,),
                 fetch_one=True,
             )
-            return result if result else {"clicks": 0, "time_taken": 0, "streak": 0}
+            return (
+                result["clicks"],
+                result["time_taken"],
+                result["streak"]
+                if result
+                else {"clicks": 0, "time_taken": 0, "streak": 0},
+            )
         except Exception:
             return {"clicks": 0, "time_taken": 0, "streak": 0}
 
