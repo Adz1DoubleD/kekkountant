@@ -1,4 +1,4 @@
-﻿aiohappyeyeballs==2.5.0
+aiohappyeyeballs==2.5.0
 aiohttp==3.12.14
 aiomysql==0.2.0
 aiosignal==1.4.0
@@ -36,4 +36,3 @@ tzlocal==5.2
 urllib3==2.5.0
 virtualenv==20.29.1
 yarl==1.18.3
-
